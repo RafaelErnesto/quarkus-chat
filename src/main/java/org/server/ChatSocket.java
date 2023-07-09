@@ -4,12 +4,16 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
+import org.server.encoders.UUIDDecoder;
+import org.server.encoders.UuidEncoder;
 
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-@ServerEndpoint("/chat/{chatId}/username/{username}")
+@ServerEndpoint(value = "/chat/{chatId}/username/{username}",
+        decoders = UUIDDecoder.class,
+        encoders = UuidEncoder.class)
 @ApplicationScoped
 public class ChatSocket {
     Map<String, Session> sessions = new ConcurrentHashMap<>();
