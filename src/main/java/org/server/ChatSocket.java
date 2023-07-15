@@ -4,46 +4,44 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
-import org.server.encoders.UUIDDecoder;
-import org.server.encoders.UuidEncoder;
+import org.server.encoders.ChatPayloadDecoder;
 
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @ServerEndpoint(value = "/chat/{chatId}/username/{username}",
-        decoders = UUIDDecoder.class,
-        encoders = UuidEncoder.class)
+        decoders = {ChatPayloadDecoder.class})
 @ApplicationScoped
 public class ChatSocket {
     Map<String, Session> sessions = new ConcurrentHashMap<>();
 
     @OnOpen
-    public void onOpen(Session session, @PathParam("username") String username, @PathParam("chatId") UUID chatId) {
+    public void onOpen(Session session, @PathParam("username") String username, @PathParam("chatId") String chatId) {
         String sessionKey = username + chatId;
         sessions.put(sessionKey, session);
     }
 
     @OnClose
-    public void onClose(@PathParam("username") String username, @PathParam("chatId") UUID chatId) {
+    public void onClose(@PathParam("username") String username, @PathParam("chatId") String chatId) {
         String sessionKey = username + chatId;
         sessions.remove(sessionKey);
-        broadcast(">> " + username + " left the chat", chatId);
+        broadcast(">> " + username + " left the chat", UUID.fromString(chatId));
     }
 
     @OnError
-    public void onError(Session session, @PathParam("username") String username, @PathParam("chatId") UUID chatId, Throwable throwable) {
+    public void onError(Session session, @PathParam("username") String username, @PathParam("chatId") String chatId, Throwable throwable) {
         String sessionKey = username + chatId;
         sessions.remove(sessionKey);
-        broadcast(">>" + username + " left the chat", chatId);
+        broadcast(">>" + username + " left the chat", UUID.fromString(chatId));
     }
 
     @OnMessage
-    public void onMessage(String message, @PathParam("username") String username, @PathParam("chatId") UUID chatId) {
-        if (message.equalsIgnoreCase("_ready_")) {
-            broadcast("User " + username + " joined the chat", chatId);
+    public void onMessage(ChatPayload chatPayload, @PathParam("username") String username) {
+        if (chatPayload.message.equalsIgnoreCase("_ready_")) {
+            broadcast("User " + username + " joined the chat", chatPayload.chatId);
         } else {
-            broadcast(username + ": " + message, chatId);
+            broadcast(username + ": " + chatPayload.message, chatPayload.chatId);
         }
     }
 
