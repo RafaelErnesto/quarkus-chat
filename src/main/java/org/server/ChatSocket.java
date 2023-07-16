@@ -31,13 +31,14 @@ public class ChatSocket {
 
     @OnError
     public void onError(Session session, @PathParam("username") String username, @PathParam("chatId") String chatId, Throwable throwable) {
+        System.out.println("##### ERROR #######");
         String sessionKey = username + chatId;
         sessions.remove(sessionKey);
         broadcast(">>" + username + " left the chat", UUID.fromString(chatId));
     }
 
     @OnMessage
-    public void onMessage(ChatPayload chatPayload, @PathParam("username") String username) {
+    public void onMessage(ChatPayload chatPayload, @PathParam("username") String username, @PathParam("chatId") String chatId) {
         if (chatPayload.message.equalsIgnoreCase("_ready_")) {
             broadcast("User " + username + " joined the chat", chatPayload.chatId);
         } else {
@@ -47,8 +48,8 @@ public class ChatSocket {
 
     private void broadcast(String message, UUID chatId) {
         sessions.entrySet().stream()
-                .filter(item -> item.getKey().contains(chatId.toString()))
-                .forEach(item -> item.getValue().getAsyncRemote().sendObject(message, result -> {
+                .filter(item -> item.getKey().contains(chatId.toString())
+                ).forEach(item -> item.getValue().getAsyncRemote().sendObject(message, result -> {
                             if (result.getException() != null) {
                                 System.out.println("Unable to send message: " + result.getException());
                             }

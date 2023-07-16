@@ -29,6 +29,7 @@
     <br/>
     <div class="row">
         <input id="name" class="col-md-4" type="text" placeholder="your name">
+        <input id="chat-id" class="col-md-4" type="text" placeholder="Chat ID">
         <button id="connect" class="col-md-1 btn btn-primary" type="button">connect</button>
         <br/>
         <br/>
@@ -51,10 +52,12 @@
 <script type="text/javascript">
       var connected = false;
       var socket;
+      var chatId;
 
       $( document ).ready(function() {
           $("#connect").click(connect);
           $("#send").click(sendMessage);
+          $("#disconnect").click(disconnect);
 
           $("#name").keypress(function(event){
               if(event.keyCode == 13 || event.which == 13) {
@@ -78,8 +81,8 @@
       var connect = function() {
           if (! connected) {
               var name = $("#name").val();
-              console.log("Val: " + name);
-              socket = new WebSocket("ws://" + location.host + "/chat/" + name);
+              chatId = $("#chat-id").val();
+              socket = new WebSocket("ws://" + location.host + "/chat/" + chatId + "/username/" + name);
               socket.onopen = function() {
                   connected = true;
                   console.log("Connected to the web socket");
@@ -96,11 +99,17 @@
           }
       };
 
+      var disconnect = function() {
+            connected = false;
+            socket = undefined;
+            chatId = undefined;
+      };
+
       var sendMessage = function() {
           if (connected) {
-              var value = $("#msg").val();
-              console.log("Sending " + value);
-              socket.send(value);
+              var msg = $("#msg").val();
+              console.log("Sending " + msg);
+              socket.send(JSON.stringify({message: msg, chatId: chatId}));
               $("#msg").val("");
           }
       };
