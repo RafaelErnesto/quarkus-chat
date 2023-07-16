@@ -5,7 +5,7 @@ import org.chat.enums.Status;
 import java.util.UUID;
 
 public class Chat {
-    public UUID id;
+    public UUID id = UUID.randomUUID();
 
     public String name;
 
